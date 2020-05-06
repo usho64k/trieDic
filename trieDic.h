@@ -4,7 +4,7 @@
 
 void triedic_init(void);
 int triedic_search(char *str);
-void triedic_record(char *str);
+int triedic_record(char *str);
 void triedic_show(void);
 
 #endif

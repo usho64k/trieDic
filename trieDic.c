@@ -12,25 +12,31 @@
 static int triedic_tree[MAX_LEN][TRIEDIC_ALLCHARS];
 static int triedic_len;
 
+static int triedic_id_max;
+
+//文字タイプ
 typedef enum E_CODE{
-	SMALL_CHAR,
-	LARGE_CHAR,
-	NUMBERS,
-	SHARP,
-	NO_DEF
+	SMALL_CHAR,		//アルファベット小文字
+	LARGE_CHAR,		//アルファベット大文字
+	NUMBERS,		//数字
+	SHARP,			//シャープ(終了記号)
+	NO_DEF			//未定義(その他)
 }E_CODES;
 
-E_CODES getCode(char c);
-static int triedic_get(int arg,char c);
-static void triedic_set(int arg,char c);
+static E_CODES getCode(char c);					//文字種取得
+static int triedic_get(int arg,char c);			//文字列一致 1文字分
+static void triedic_set(int arg,char c);		//文字列設定 1文字分
 
+//trie木の初期化
 void triedic_init(void)
 {
 	memset(triedic_tree,0,TRIEDIC_ALLCHARS *  MAX_LEN);
 	triedic_len = 0;
+	triedic_id_max = 1;
 }
 
-E_CODES getCode(char c)
+//文字種の取得
+static E_CODES getCode(char c)
 {
 	if(c >= 0x61 && c <= 0x7A)
 		return SMALL_CHAR;
@@ -44,7 +50,10 @@ E_CODES getCode(char c)
 		return NO_DEF;	
 }
 
-
+//トライ木へのreadアクセス
+//arg：検索したい順列番号
+//c：検索したい文字列からピックアップした1文字
+//文字cが木構造中の経路に存在する場合は、木構造ポインタ番号を返し、なければ-1を返す
 static int triedic_get(int arg,char c)
 {
 	switch(getCode(c))
@@ -66,7 +75,7 @@ static int triedic_get(int arg,char c)
 			return -1;
 	case SHARP:
 		if(triedic_tree[arg][36] != 0)
-			return 1;
+			return triedic_tree[arg][36];
 		else
 			return -1;
 	default:
@@ -74,6 +83,11 @@ static int triedic_get(int arg,char c)
 	}
 }
 
+//トライ木へのwriteアクセス
+//arg：追加したい列番号
+//c：追加する文字
+//文字cをarg番目の配列の次のポインタを設定し、新たな文字を追加する
+//追加することが確定してからコールすること
 static void triedic_set(int arg,char c)
 {
 	switch(getCode(c))
@@ -88,16 +102,20 @@ static void triedic_set(int arg,char c)
 		triedic_tree[arg][c - 0x30] = ++triedic_len;
 		break;
 	case SHARP:
-		triedic_tree[arg][36] = ++triedic_len;
+		triedic_tree[arg][36] = triedic_id_max++;
+		++triedic_len;
 		break;
 	default:
 		break;
 	}
 }
 
-void triedic_record(char *str)
+//トライ木へのwriteアクセス
+//文字列の登録
+int triedic_record(char *str)
 {
 	int cnt = 0;
+	//#は終了記号
 	while(*str != '#')
 	{
 		if(triedic_get(cnt,*str) >= 0)
@@ -113,8 +131,13 @@ void triedic_record(char *str)
 	}
 	if(triedic_get(cnt,*str) != 1)
 		triedic_set(cnt,'#');
+
+	return triedic_id_max - 1;	//登録するとid_maxが1増加するので、直前の値を返す
 }
 
+//トライ木へのreadアクセス
+//文字列の検索
+//登録IDを返す
 int triedic_search(char *str)
 {
 	int cnt = 0;
