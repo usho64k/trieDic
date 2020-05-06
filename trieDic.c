@@ -8,6 +8,7 @@
 #define TRIEDIC_ALLCHARS	TRIEDIC_CHARS + TRIEDIC_NUMS + 1
 
 #define MAX_LEN			2048
+#define DEBUG_SHOWLEN	130
 
 static int triedic_tree[MAX_LEN][TRIEDIC_ALLCHARS];
 static int triedic_len;
@@ -70,12 +71,12 @@ static int triedic_get(int arg,char c)
 			return -1;
 	case NUMBERS:
 		if(triedic_tree[arg][c - 0x30] != 0)
-			return triedic_tree[arg][c - 0x30 + 26];
+			return triedic_tree[arg][c - 0x30 + TRIEDIC_CHARS];
 		else
 			return -1;
 	case SHARP:
-		if(triedic_tree[arg][36] != 0)
-			return triedic_tree[arg][36];
+		if(triedic_tree[arg][TRIEDIC_ALLCHARS - 1] != 0)
+			return triedic_tree[arg][TRIEDIC_ALLCHARS - 1];
 		else
 			return -1;
 	default:
@@ -99,10 +100,10 @@ static void triedic_set(int arg,char c)
 		triedic_tree[arg][c - 0x41] = ++triedic_len;
 		break;
 	case NUMBERS:
-		triedic_tree[arg][c - 0x30] = ++triedic_len;
+		triedic_tree[arg][c - 0x30 + TRIEDIC_CHARS] = ++triedic_len;
 		break;
 	case SHARP:
-		triedic_tree[arg][36] = triedic_id_max++;
+		triedic_tree[arg][TRIEDIC_ALLCHARS - 1] = triedic_id_max++;
 		++triedic_len;
 		break;
 	default:
@@ -161,13 +162,13 @@ int triedic_search(char *str)
 void triedic_show(void)
 {
 	int i,j;
-	printf("   :  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z  0  1  2  3  4  5  6  7  8  9  #\n");
-	for(i = 0; i < 50; i++)
+	printf("    :   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o   p   q   r   s   t   u   v   w   x   y   z   0   1   2   3   4   5   6   7   8   9   #\n");
+	for(i = 0; i < DEBUG_SHOWLEN; i++)
 	{
-		printf(" %2d:",i);
+		printf(" %3d:",i);
 		for(j = 0; j < TRIEDIC_ALLCHARS; j++)
 		{
-			printf(" %2d",triedic_tree[i][j]);
+			printf(" %3d",triedic_tree[i][j]);
 		}
 		printf("\n");
 	}
